@@ -167,7 +167,7 @@ evernote.xcconfig = { 'HEADER_SEARCH_PATHS' => '$(SDKROOT)/usr/include/libxml2' 
   s.subspec 'YouTube' do |youtube|
     youtube.source_files = 'Classes/ShareKit/Sharers/Services/YouTube/**/*.{h,m}'
     youtube.dependency 'ShareKit/Core'
-    youtube.dependency 'Google-API-Client/YouTube'
+    youtube.dependency 'GoogleAPIClientForREST/YouTube'
   end
 
   s.subspec 'GooglePlus' do |googleplus|
