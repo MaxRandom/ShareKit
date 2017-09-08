@@ -145,13 +145,7 @@ evernote.xcconfig = { 'HEADER_SEARCH_PATHS' => '$(SDKROOT)/usr/include/libxml2' 
     imgur.source_files = 'Classes/ShareKit/Sharers/Services/Imgur/**/*.{h,m}'
     imgur.dependency 'ShareKit/Core'
   end
-  
-  #s.subspec 'Pinterest' do |pinterest|
-  #  pinterest.source_files = 'Classes/ShareKit/Sharers/Services/Pinterest/**/*.{h,m}'
-  #  pinterest.dependency 'PinterestSDK'
-  #  pinterest.dependency 'ShareKit/Core'
-  #end
-  
+
   s.subspec 'WhatsApp' do |whatsapp|
       whatsapp.source_files = 'Classes/ShareKit/Sharers/Services/WhatsApp/**/*.{h,m}'
       whatsapp.dependency 'ShareKit/Core'
@@ -167,18 +161,8 @@ evernote.xcconfig = { 'HEADER_SEARCH_PATHS' => '$(SDKROOT)/usr/include/libxml2' 
   s.subspec 'YouTube' do |youtube|
     youtube.source_files = 'Classes/ShareKit/Sharers/Services/YouTube/**/*.{h,m}'
     youtube.dependency 'ShareKit/Core'
+    youtube.dependency 'GTMOAuth2'
     youtube.dependency 'GoogleAPIClientForREST/YouTube'
   end
-
-  s.subspec 'GooglePlus' do |googleplus|
-    googleplus.source_files = 'Classes/ShareKit/Sharers/Services/Google Plus/**/*.{h,m}'
-    googleplus.vendored_frameworks = 'Frameworks/GooglePlus.framework'
-    googleplus.resource = "Frameworks/GooglePlus.bundle"
-    googleplus.framework = 'AssetsLibrary', 'CoreLocation', 'CoreMotion', 'CoreGraphics', 'CoreText', 'MediaPlayer', 'Security', 'SystemConfiguration', 'AddressBook'
-    googleplus.dependency 'ShareKit/Core'
-    googleplus.dependency 'GoogleAPIClientForREST/Plus'
-    googleplus.dependency 'OpenInChrome'
-    googleplus.dependency 'gtm-logger'
-    end
 
 end

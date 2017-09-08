@@ -13,7 +13,7 @@
 #import "SHKYouTube.h"
 #import "SharersCommonHeaders.h"
 
-#import "GTLYouTube.h"
+#import "GTLRYouTube.h"
 #import "GTLUtilities.h"
 #import "GTMHTTPUploadFetcher.h"
 #import "GTMOAuth2ViewControllerTouch.h"
@@ -27,10 +27,10 @@ NSString *const kKeychainItemName = @"ShareKit: YouTube";
 @interface SHKYouTube ()
 
 // Accessor for the app's single instance of the service object.
-@property (nonatomic, readonly) GTLServiceYouTube *youTubeService;
+@property (nonatomic, readonly) GTLRYouTubeService *youTubeService;
 
 // Our upload
-@property (nonatomic, strong) GTLServiceTicket *uploadTicket;
+@property (nonatomic, strong) GTLRServiceTicket *uploadTicket;
 @property (nonatomic, strong) NSURL *uploadLocationURL;
 
 @end
@@ -46,19 +46,19 @@ NSString *const kKeychainItemName = @"ShareKit: YouTube";
 // state information such as cookies set by the server in response
 // to queries.
 
-+ (GTLServiceYouTube *)youTubeService
++ (GTLRYouTubeService *)youTubeService
 {
-    static GTLServiceYouTube *service;
+    static GTLRYouTubeService *service;
     
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        service = [[GTLServiceYouTube alloc] init];
+        service = [[GTLRYouTubeService alloc] init];
         service.retryEnabled = YES;
     });
     return service;
 }
 
-- (GTLServiceYouTube *)youTubeService {
+- (GTLRYouTubeService *)youTubeService {
     return [SHKYouTube youTubeService];
 }
 
