@@ -14,8 +14,8 @@
 #import "SharersCommonHeaders.h"
 
 #import "GTLRYouTube.h"
-#import "GTLUtilities.h"
-#import "GTMHTTPUploadFetcher.h"
+#import "GTLRUtilities.h"
+#import "GTMSessionFetcher.h"
 #import "GTMOAuth2ViewControllerTouch.h"
 
 // The oauth scope we need to request at YouTube
@@ -86,7 +86,7 @@ NSString *const kKeychainItemName = @"ShareKit: YouTube";
 #pragma mark Configuration : Dynamic Enable
 
 + (BOOL)canAutoShare{
-	return NO;
+    return NO;
 }
 
 #pragma mark Authorization
@@ -152,7 +152,7 @@ NSString *const kKeychainItemName = @"ShareKit: YouTube";
     
     // Show the OAuth 2 sign-in controller.
     GTMOAuth2ViewControllerTouch *controller =
-    [GTMOAuth2ViewControllerTouch controllerWithScope:kGTLAuthScopeYouTube
+    [GTMOAuth2ViewControllerTouch controllerWithScope:kGTLRAuthScopeYouTube
                                              clientID:SHKCONFIG(youTubeConsumerKey)
                                          clientSecret:SHKCONFIG(youTubeSecret)
                                      keychainItemName:kKeychainItemName
@@ -161,7 +161,7 @@ NSString *const kKeychainItemName = @"ShareKit: YouTube";
     
     controller.navigationItem.leftBarButtonItem = [[UIBarButtonItem alloc] initWithTitle:SHKLocalizedString(@"Cancel")
                                                                                    style:UIBarButtonItemStyleBordered
-                                                                                   target:self
+                                                                                  target:self
                                                                                   action:@selector(authorizationCanceled:)];
     [[SHK currentHelper] showViewController:controller];
     [[SHK currentHelper] keepSharerReference:self];
@@ -182,10 +182,10 @@ NSString *const kKeychainItemName = @"ShareKit: YouTube";
 
 - (BOOL)send
 {
-	if (![self validateItem]) return NO;
+    if (![self validateItem]) return NO;
     
     switch (self.item.shareType) {
-
+            
         case SHKShareTypeFile:
             [self uploadVideoFile];
             return YES;
@@ -216,22 +216,22 @@ NSString *const kKeychainItemName = @"ShareKit: YouTube";
     // Collect the metadata for the upload from the item.
     
     // Status.
-    GTLYouTubeVideoStatus *status = [GTLYouTubeVideoStatus object];
+    GTLRYouTube_VideoStatus *status = [GTLRYouTube_VideoStatus object];
     status.privacyStatus = [self.item customValueForKey:@"privacy"];
     
     // Snippet.
-    GTLYouTubeVideoSnippet *snippet = [GTLYouTubeVideoSnippet object];
+    GTLRYouTube_VideoSnippet *snippet = [GTLRYouTube_VideoSnippet object];
     if(self.item.title != nil) snippet.title = self.item.title;
     if(self.item.text  != nil) snippet.descriptionProperty = self.item.text;
     if(self.item.tags  != nil) snippet.tags = self.item.tags;
     
     // TODO: Categories
-//    if ([_uploadCategoryPopup isEnabled]) {
-//        NSMenuItem *selectedCategory = [_uploadCategoryPopup selectedItem];
-//        snippet.categoryId = [selectedCategory representedObject];
-//    }
+    //    if ([_uploadCategoryPopup isEnabled]) {
+    //        NSMenuItem *selectedCategory = [_uploadCategoryPopup selectedItem];
+    //        snippet.categoryId = [selectedCategory representedObject];
+    //    }
     
-    GTLYouTubeVideo *video = [GTLYouTubeVideo object];
+    GTLRYouTube_Video *video = [GTLRYouTube_Video object];
     video.status = status;
     video.snippet = snippet;
     
@@ -250,12 +250,12 @@ NSString *const kKeychainItemName = @"ShareKit: YouTube";
     
     // Since we are restarting an upload, we do not need to add metadata to the
     // video object.
-    GTLYouTubeVideo *video = [GTLYouTubeVideo object];
+    GTLRYouTube_Video *video = [GTLRYouTube_Video object];
     
     [self uploadVideoWithVideoObject:video resumeUploadLocationURL:_uploadLocationURL];
 }
 
-- (void)uploadVideoWithVideoObject:(GTLYouTubeVideo *)video resumeUploadLocationURL:(NSURL *)locationURL {
+- (void)uploadVideoWithVideoObject:(GTLRYouTube_Video *)video resumeUploadLocationURL:(NSURL *)locationURL {
     
     // Get a file handle for the upload data.
     NSFileHandle *fileHandle = [NSFileHandle fileHandleForReadingAtPath:self.item.file.path];
@@ -269,8 +269,8 @@ NSString *const kKeychainItemName = @"ShareKit: YouTube";
     // Our callback blocks ----
     
     // Completion
-    void (^uploadComplete)(GTLServiceTicket *ticket, GTLYouTubeVideo *uploadedVideo, NSError *error) =
-    ^(GTLServiceTicket *ticket, GTLYouTubeVideo *uploadedVideo, NSError *error){
+    void (^uploadComplete)(GTLRServiceTicket *ticket, GTLRYouTube_Video *uploadedVideo, NSError *error) =
+    ^(GTLRServiceTicket *ticket, GTLRYouTube_Video *uploadedVideo, NSError *error){
         self.uploadTicket = nil;
         if (error == nil) {
             [self sendDidFinish];
@@ -281,8 +281,8 @@ NSString *const kKeychainItemName = @"ShareKit: YouTube";
     };
     
     // Progress
-    void (^uploadProgress)(GTLServiceTicket *ticket, unsigned long long numberOfBytesRead, unsigned long long dataLength) =
-    ^(GTLServiceTicket *ticket, unsigned long long numberOfBytesRead, unsigned long long dataLength){
+    void (^uploadProgress)(GTLRServiceTicket *ticket, unsigned long long numberOfBytesRead, unsigned long long dataLength) =
+    ^(GTLRServiceTicket *ticket, unsigned long long numberOfBytesRead, unsigned long long dataLength){
         float progress = (double)numberOfBytesRead / (double)dataLength;
         if(progress < 1)
             [self showUploadedBytes:numberOfBytesRead totalBytes:dataLength];
@@ -292,22 +292,17 @@ NSString *const kKeychainItemName = @"ShareKit: YouTube";
         
     };
     
-    // URL Change - allows for upload resume
-    void (^locationChangeBlock)(NSURL *url) = ^(NSURL *url){
-        self.uploadLocationURL = url;
-    };
-    
     // Parameters
-    GTLUploadParameters *uploadParameters = [GTLUploadParameters uploadParametersWithFileHandle:fileHandle MIMEType:self.item.file.mimeType];
+    GTLRUploadParameters *uploadParameters = [GTLRUploadParameters uploadParametersWithFileHandle:fileHandle MIMEType:self.item.file.mimeType];
     uploadParameters.uploadLocationURL = locationURL;
     
     // Setup the upload
-    GTLQueryYouTube *query = [GTLQueryYouTube queryForVideosInsertWithObject:video part:@"snippet,status" uploadParameters:uploadParameters];
+    
+    GTLRYouTubeQuery_VideosInsert *query = [GTLRYouTubeQuery_VideosInsert queryWithObject:video part:@"snippet,status" uploadParameters:uploadParameters];
     
     // Start the upload
     self.uploadTicket = [self.youTubeService executeQuery:query completionHandler:uploadComplete];
-    self.uploadTicket.uploadProgressBlock = uploadProgress;
-    ((GTMHTTPUploadFetcher *)self.uploadTicket.objectFetcher).locationChangeBlock = locationChangeBlock;
+    self.uploadTicket.service.uploadProgressBlock = uploadProgress;
     
     // TODO: Monitor application going to background/foreground to pause and resume uploads. Possibly tie into offline upload, as we may go offline mid upload
 }
@@ -318,22 +313,22 @@ NSString *const kKeychainItemName = @"ShareKit: YouTube";
 
 - (NSArray *)shareFormFieldsForType:(SHKShareType)type
 {
-	if (type == SHKShareTypeFile)
-		return @[
-           [SHKFormFieldSettings label:SHKLocalizedString(@"Title") key:@"title" type:SHKFormFieldTypeText start:self.item.title],
-           [SHKFormFieldSettings label:SHKLocalizedString(@"Text") key:@"text" type:SHKFormFieldTypeText start:self.item.text],
-           [SHKFormFieldSettings label:SHKLocalizedString(@"Tags") key:@"tags" type:SHKFormFieldTypeText start:[self.item.tags componentsJoinedByString:@","]],
-           [SHKFormFieldOptionPickerSettings label:SHKLocalizedString(@"Privacy")
-                                               key:@"privacy"
-                                             start:@"public"
-                                       pickerTitle:SHKLocalizedString(@"Privacy")
-                                   selectedIndexes:[[NSMutableIndexSet alloc] initWithIndex:0]
-                                     displayValues:@[SHKLocalizedString(@"Public"), SHKLocalizedString(@"Private"), SHKLocalizedString(@"Unlisted")]
-                                        saveValues:@[@"public", @"private", @"unlisted"]
-                                     allowMultiple:NO
-                                      fetchFromWeb:NO
-                                          provider:nil]];
-	return nil;
+    if (type == SHKShareTypeFile)
+        return @[
+                 [SHKFormFieldSettings label:SHKLocalizedString(@"Title") key:@"title" type:SHKFormFieldTypeText start:self.item.title],
+                 [SHKFormFieldSettings label:SHKLocalizedString(@"Text") key:@"text" type:SHKFormFieldTypeText start:self.item.text],
+                 [SHKFormFieldSettings label:SHKLocalizedString(@"Tags") key:@"tags" type:SHKFormFieldTypeText start:[self.item.tags componentsJoinedByString:@","]],
+                 [SHKFormFieldOptionPickerSettings label:SHKLocalizedString(@"Privacy")
+                                                     key:@"privacy"
+                                                   start:@"public"
+                                             pickerTitle:SHKLocalizedString(@"Privacy")
+                                         selectedIndexes:[[NSMutableIndexSet alloc] initWithIndex:0]
+                                           displayValues:@[SHKLocalizedString(@"Public"), SHKLocalizedString(@"Private"), SHKLocalizedString(@"Unlisted")]
+                                              saveValues:@[@"public", @"private", @"unlisted"]
+                                           allowMultiple:NO
+                                            fetchFromWeb:NO
+                                                provider:nil]];
+    return nil;
 }
 
 @end
